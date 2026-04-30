@@ -2,7 +2,7 @@ import fetch, {FormData} from "node-fetch";
 import listen from "./lib/listen.js";
 import replaceVariables from "./lib/replace-variables.js";
 import log from "./lib/log.js";
-import {scanRequests, setApiKey, setResponse, updateTokenListen} from "./lib/api.js";
+import {createToken, scanRequests, setApiKey, setResponse, updateTokenListen} from "./lib/api.js";
 
 const getTargetPath = function (url) {
     // We only want the `/a/b/c` part:
@@ -85,19 +85,26 @@ const forward = (tokenId, request, variables, target, keepUrl, listenSeconds) =>
                 )
             }
         })
-        .catch((err) => {
+        .catch(async (err) => {
             log.error({
                 msg: 'Error forwarding request',
                 err,
             })
+            if (listenSeconds > 0) {
+                await setResponse(
+                    tokenId,
+                    request.uuid,
+                    500,
+                    'Error forwarding request: ' + err,
+                    {'content-type': 'text/plain'},
+                    listenSeconds * 1000
+                )
+            }
         })
 }
 
 export default async (argv) => {
-    if (!argv.token && !process.env.WH_TOKEN) {
-        throw new Error('Please specify a token (--token)')
-    }
-    const tokenId = argv.token ?? process.env.WH_TOKEN;
+    let tokenId = argv.token ?? process.env.WH_TOKEN;
     const apiKey = argv['api-key'] ?? process.env.WH_API_KEY;
     const searchQuery = argv['query'] ?? process.env.WH_QUERY;
     const listenSeconds = argv['listen-timeout'] ?? process.env.WH_LISTEN_TIMEOUT ?? 5;
@@ -105,6 +112,11 @@ export default async (argv) => {
     const target = argv.target ?? process.env.WH_TARGET ?? 'https://localhost';
 
     setApiKey(apiKey);
+
+    if (!tokenId) {
+        tokenId = (await createToken()).uuid;
+        log.info('Auto-created URL: https://webhook.site/' + tokenId);
+    }
 
     // Listen for the amount of seconds
     await updateTokenListen(tokenId, listenSeconds);
@@ -119,6 +131,7 @@ export default async (argv) => {
     process.on('SIGINT', clearTokenListen)
 
     if (searchQuery) {
+        log.info('Scanning requests with query ' + searchQuery + ' and forwarding to ' + target);
         // Loop through existing requests if search query specified
         await scanRequests(tokenId, searchQuery, (request) => {
             forward(tokenId, request, {}, target, keepUrl, 0)
@@ -132,5 +145,6 @@ export default async (argv) => {
                 forward(tokenId, data.request, data.variables, target, keepUrl, listenSeconds)
             }
         )
+        log.info('Forwarding all incoming requests from https://webhook.site/' + tokenId + ' to ' + target);
     }
 }

@@ -2,29 +2,35 @@
 
 // Dependencies
 import minimist from 'minimist'
+import { loadConfig } from './commands/lib/config.js'
 
-// Commands
-import help from './commands/help.js'
-import forward from './commands/forward.js'
-import exec from "./commands/exec.js";
+// Load config file before importing commands, so env vars (incl. WH_LOG_LEVEL)
+// are set before modules initialize.
+loadConfig();
 
 const argv = minimist(process.argv.slice(2));
 const command = argv['_'][0];
 const version = '0.2.7';
 
 switch (command) {
-    case 'forward':
-        forward(argv)
+    case 'forward': {
+        const { default: forward } = await import('./commands/forward.js');
+        forward(argv);
         break;
+    }
 
-    case 'exec':
-        exec(argv)
+    case 'exec': {
+        const { default: exec } = await import('./commands/exec.js');
+        exec(argv);
         break;
+    }
 
     case 'version':
         console.log(version);
         break;
 
-    default:
-        help(version)
+    default: {
+        const { default: help } = await import('./commands/help.js');
+        help(version);
+    }
 }

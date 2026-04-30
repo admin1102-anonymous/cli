@@ -15,9 +15,6 @@ export default (tokenId, apiKey, onRequest) => {
 
     channel.socket.on('connect', (error) => {
         logger.info('Connected to Websocket. Listening for requests.', { error })
-        if (!apiKey) {
-            logger.warn('Warning: If token is associated with a Webhook.site account, specify an API key.', { error })
-        }
     })
 
     channel.socket.on('error', (err) => {

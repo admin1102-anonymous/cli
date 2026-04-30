@@ -5,6 +5,16 @@ import log from "./log.js";
 let apiKey = process.env.WH_API_KEY ?? null;
 let apiUrl = process.env.WH_API ?? 'https://webhook.site';
 
+async function getErrorMessage(res) {
+    if (res.status === 401) return 'Authentication error. (Are you using a valid API key?)';
+    const body = await res.text();
+    try {
+        return JSON.parse(body)?.error?.message ?? body;
+    } catch {
+        return body;
+    }
+}
+
 const getHeaders = function () {
     let headers = {
         'Accept': 'application/json',
@@ -22,6 +32,20 @@ export function setApiKey(newApiKey) {
     apiKey = newApiKey;
 }
 
+export async function createToken(config) {
+    return fetch(`${apiUrl}/token`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(config),
+    })
+        .then(async res => {
+            if (res.status === 201) {
+                return res.json();
+            }
+            throw Error('Could not create token: ' + await getErrorMessage(res));
+        });
+}
+
 export async function getToken(id) {
     return fetch(`${apiUrl}/token/${id}`, {
         method: 'GET',
@@ -31,7 +55,7 @@ export async function getToken(id) {
             if (res.status === 200) {
                 return res.json();
             }
-            throw Error('Could not get token: ' + await res.text());
+            throw Error('Could not get token: ' + await getErrorMessage(res));
         });
 }
 
@@ -45,7 +69,7 @@ export async function updateToken(id, tokenData) {
             if (res.status === 200) {
                 return res.json();
             }
-            throw Error('Could not update token: ' + await res.text());
+            throw Error('Could not update token: ' + await getErrorMessage(res));
         });
 }
 
@@ -82,7 +106,7 @@ export async function setResponse(tokenId, requestId, status, content, headers, 
             log.info({
                 msg: 'Error forwarding response to Webhook.site',
                 status: res.status,
-                error: (await res.text()),
+                error: await getErrorMessage(res),
             })
         })
         .catch((err) => {

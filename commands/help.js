@@ -47,17 +47,33 @@ ${'Search Query'.bold}
                                  14 days and newer)
   More info here: https://docs.webhook.site/api/requests.html#search-query-examples
     
+${'Configuration File'.bold}
+  Arguments can be set in ~/.config/whcli/whcli.yaml (override with ${'WH_CONFIG'.underline}), for example:
+
+    token: 00000000-0000-0000-0000-000000000000
+    api-key: my-api-key
+    target: https://localhost:8000
+    command: echo $request.content$
+    listen-timeout: 5
+    query: content:"foobar"
+    log-level: debug
+
+  Command-line arguments and environment variables take precedence over
+  the config file.
+
 ${'Environment Variables'.bold}
   Some command arguments can be specified via environment variables:
-    ${'WH_TOKEN'.underline}           Specifies --token         
-    ${'WH_API_KEY'.underline}         Specifies --api-key       
-    ${'WH_TARGET'.underline}          Specifies --target        
-    ${'WH_COMMAND'.underline}         Specifies --command    
-    ${'WH_LISTEN_TIMEOUT'.underline}  Specifies --listen-timeout   
+    ${'WH_TOKEN'.underline}           Specifies --token
+    ${'WH_API_KEY'.underline}         Specifies --api-key
+    ${'WH_TARGET'.underline}          Specifies --target
+    ${'WH_COMMAND'.underline}         Specifies --command
+    ${'WH_LISTEN_TIMEOUT'.underline}  Specifies --listen-timeout
     ${'WH_QUERY'.underline}           Specifies --query
-    ${'WH_LOG_LEVEL'.underline}       Sets log level (silent, trace, debug, info, 
+    ${'WH_CONFIG'.underline}          Config file path (default: ~/.config/whcli/whcli.yaml)
+    ${'WH_LOG_LEVEL'.underline}       Sets log level (silent, trace, debug, info,
                        warn, error, fatal) Defaults to info.
-    ${'NODE_TLS_REJECT_UNAUTHORIZED'.underline}    Set to "0" to disable e.g. self-signed 
+    ${'WH_LOG_FORMAT'.underline}      Sets log format. Set to "json" for raw JSON output.
+    ${'NODE_TLS_REJECT_UNAUTHORIZED'.underline}    Set to "0" to disable e.g. self-signed
                                     or expired certificate errors.
 `)
 }
