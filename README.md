@@ -1,4 +1,4 @@
-# Webhook.site CLI
+    # Webhook.site CLI
 
 This repository contains the official command-line interface for Webhook.site.
 
